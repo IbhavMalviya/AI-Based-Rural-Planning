@@ -20,13 +20,20 @@ const iconDefault = L.icon({
 L.Marker.prototype.options.icon = iconDefault;
 
 interface MapViewProps {
-  location?: { lat: number; lng: number; name: string };
+  location?: { 
+    lat: number; 
+    lng: number; 
+    name: string;
+    boundingBox?: number[];
+    polygon?: any;
+  };
 }
 
 const MapView = ({ location }: MapViewProps) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<L.Map | null>(null);
   const marker = useRef<L.Marker | null>(null);
+  const boundaryLayer = useRef<L.GeoJSON | null>(null);
 
   // Initialize map
   useEffect(() => {
@@ -54,45 +61,135 @@ const MapView = ({ location }: MapViewProps) => {
     };
   }, []);
 
-  // Update marker when location changes
+  // Update boundary/marker when location changes
   useEffect(() => {
     if (!map.current || !location) return;
 
-    // Remove old marker
+    // Remove old marker and boundary
     if (marker.current) {
       marker.current.remove();
+      marker.current = null;
+    }
+    if (boundaryLayer.current) {
+      boundaryLayer.current.remove();
+      boundaryLayer.current = null;
     }
 
-    // Add new marker
-    marker.current = L.marker([location.lat, location.lng], {
-      icon: iconDefault,
-    })
-      .addTo(map.current)
-      .bindPopup(`
-        <div style="padding: 8px; min-width: 150px;">
-          <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
-            ${location.name}
-          </h3>
-          <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
-            ${location.lat.toFixed(4)}°, ${location.lng.toFixed(4)}°
-          </p>
-        </div>
-      `);
+    console.log('[MAP] Location data:', location);
 
-    // Fly to location with smooth animation
-    map.current.flyTo([location.lat, location.lng], 13, {
-      duration: 2,
-      easeLinearity: 0.5,
-    });
+    // If we have polygon data, draw the boundary
+    if (location.polygon) {
+      console.log('[MAP] Drawing boundary polygon');
+      
+      boundaryLayer.current = L.geoJSON(location.polygon, {
+        style: {
+          color: '#16a34a',
+          weight: 3,
+          opacity: 0.8,
+          fillColor: '#16a34a',
+          fillOpacity: 0.2,
+        },
+      })
+        .addTo(map.current)
+        .bindPopup(`
+          <div style="padding: 8px; min-width: 150px;">
+            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
+              ${location.name}
+            </h3>
+            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
+              Analysis area boundary
+            </p>
+          </div>
+        `);
 
-    // Open popup after flying
-    setTimeout(() => {
-      marker.current?.openPopup();
-    }, 2000);
+      // Fit map to boundary
+      const bounds = boundaryLayer.current.getBounds();
+      map.current.fitBounds(bounds, {
+        padding: [50, 50],
+        duration: 2,
+      });
+
+      // Open popup at center
+      setTimeout(() => {
+        boundaryLayer.current?.openPopup([location.lat, location.lng]);
+      }, 2000);
+
+    } 
+    // If we have bounding box but no polygon, draw a rectangle
+    else if (location.boundingBox && location.boundingBox.length === 4) {
+      console.log('[MAP] Drawing bounding box');
+      
+      const [minLat, maxLat, minLng, maxLng] = location.boundingBox;
+      const bounds: L.LatLngBoundsExpression = [
+        [minLat, minLng],
+        [maxLat, maxLng],
+      ];
+
+      const rectangle = L.rectangle(bounds, {
+        color: '#16a34a',
+        weight: 3,
+        opacity: 0.8,
+        fillColor: '#16a34a',
+        fillOpacity: 0.2,
+      })
+        .addTo(map.current)
+        .bindPopup(`
+          <div style="padding: 8px; min-width: 150px;">
+            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
+              ${location.name}
+            </h3>
+            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
+              Analysis area boundary
+            </p>
+          </div>
+        `);
+
+      map.current.fitBounds(bounds, {
+        padding: [50, 50],
+        duration: 2,
+      });
+
+      setTimeout(() => {
+        rectangle.openPopup();
+      }, 2000);
+
+      boundaryLayer.current = rectangle as any;
+    } 
+    // Fallback to marker if no boundary data
+    else {
+      console.log('[MAP] Drawing center marker (no boundary data)');
+      
+      marker.current = L.marker([location.lat, location.lng], {
+        icon: iconDefault,
+      })
+        .addTo(map.current)
+        .bindPopup(`
+          <div style="padding: 8px; min-width: 150px;">
+            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
+              ${location.name}
+            </h3>
+            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
+              ${location.lat.toFixed(4)}°, ${location.lng.toFixed(4)}°
+            </p>
+          </div>
+        `);
+
+      map.current.flyTo([location.lat, location.lng], 13, {
+        duration: 2,
+        easeLinearity: 0.5,
+      });
+
+      setTimeout(() => {
+        marker.current?.openPopup();
+      }, 2000);
+    }
 
     return () => {
       if (marker.current) {
         marker.current.remove();
+      }
+      if (boundaryLayer.current) {
+        boundaryLayer.current.remove();
       }
     };
   }, [location]);

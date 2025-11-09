@@ -6,11 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Geocoding function using OpenCage Geocoder API (alternative to geopy)
-async function getLocationCoordinates(location: string): Promise<{ lat: number; lon: number } | null> {
+// Geocoding function that returns coordinates AND boundary polygon
+async function getLocationCoordinates(location: string): Promise<{ 
+  lat: number; 
+  lon: number; 
+  boundingBox?: number[];
+  polygon?: any;
+  displayName?: string;
+} | null> {
   try {
-    // Use Nominatim API for geocoding (same as Python geopy)
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`;
+    // Use Nominatim API with polygon data
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1&polygon_geojson=1`;
     
     const response = await fetch(url, {
       headers: {
@@ -30,9 +36,14 @@ async function getLocationCoordinates(location: string): Promise<{ lat: number; 
       return null;
     }
 
+    const result = data[0];
+    
     return {
-      lat: parseFloat(data[0].lat),
-      lon: parseFloat(data[0].lon),
+      lat: parseFloat(result.lat),
+      lon: parseFloat(result.lon),
+      boundingBox: result.boundingbox ? result.boundingbox.map((x: string) => parseFloat(x)) : undefined,
+      polygon: result.geojson,
+      displayName: result.display_name,
     };
   } catch (error) {
     console.error('Error in geocoding:', error);
@@ -216,10 +227,15 @@ serve(async (req) => {
           }
 
           console.log(`[STREAMING] Coordinates found: ${coords.lat}, ${coords.lon}`);
+          console.log(`[STREAMING] Boundary data:`, coords.polygon ? 'Available' : 'Not available');
+          
           sendEvent('coordinates', { 
             latitude: coords.lat, 
             longitude: coords.lon,
-            location: location 
+            location: location,
+            boundingBox: coords.boundingBox,
+            polygon: coords.polygon,
+            displayName: coords.displayName
           });
 
           // Step 2: Fetch weather data

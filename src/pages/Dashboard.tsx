@@ -17,7 +17,12 @@ import { Thermometer, Droplets, Leaf, Mountain } from "lucide-react";
 
 interface EnvironmentalData {
   location: string;
-  coordinates: { lat: number; lng: number };
+  coordinates: { 
+    lat: number; 
+    lng: number;
+    boundingBox?: number[];
+    polygon?: any;
+  };
   weather: {
     avgTemperature: number;
     avgHumidity: number;
@@ -139,8 +144,10 @@ const Dashboard = () => {
               partialData.coordinates = {
                 lat: eventData.latitude,
                 lng: eventData.longitude,
+                boundingBox: eventData.boundingBox,
+                polygon: eventData.polygon,
               };
-              partialData.location = eventData.location;
+              partialData.location = eventData.displayName || eventData.location;
               setData({ ...partialData } as EnvironmentalData);
               break;
 
@@ -455,7 +462,14 @@ Soil Type,${data.soil.soilType}`;
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 overflow-hidden border-none shadow-[var(--shadow-strong)]">
               <CardContent className="p-0 h-[500px]">
-                <MapView location={{ ...data.coordinates, name: data.location }} />
+                <MapView 
+                  location={{ 
+                    ...data.coordinates, 
+                    name: data.location,
+                    boundingBox: data.coordinates.boundingBox,
+                    polygon: data.coordinates.polygon
+                  }} 
+                />
               </CardContent>
             </Card>
 
