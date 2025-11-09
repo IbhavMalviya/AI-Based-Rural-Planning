@@ -1,0 +1,62 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { TrendingUp } from "lucide-react";
+
+interface DataChartProps {
+  weatherData: {
+    avgTemperature: number;
+    avgHumidity: number;
+    prevYearRainfall: number;
+    avgAnnualRainfall: number;
+  };
+  soilData: {
+    ph: number;
+    nitrogen: number;
+    phosphorus: number;
+    potassium: number;
+  };
+}
+
+const DataChart = ({ weatherData, soilData }: DataChartProps) => {
+  const chartData = [
+    {
+      category: "NPK Levels",
+      Nitrogen: soilData.nitrogen,
+      Phosphorus: soilData.phosphorus,
+      Potassium: soilData.potassium,
+    },
+  ];
+
+  return (
+    <Card className="animate-fade-in shadow-[var(--shadow-soft)]">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-primary">
+          <TrendingUp className="h-5 w-5" />
+          Nutrient Analysis Overview
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart data={chartData}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="category" />
+            <YAxis label={{ value: 'mg/kg', angle: -90, position: 'insideLeft' }} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: '8px'
+              }}
+            />
+            <Legend />
+            <Bar dataKey="Nitrogen" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="Phosphorus" fill="hsl(var(--secondary))" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="Potassium" fill="hsl(var(--accent))" radius={[8, 8, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default DataChart;
