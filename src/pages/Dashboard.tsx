@@ -40,6 +40,7 @@ const Dashboard = () => {
 
   const handleSearch = async (location: string) => {
     setIsLoading(true);
+    console.log('[FRONTEND] Starting search for:', location);
 
     // Initialize partial data structure
     const partialData: Partial<EnvironmentalData> = {
@@ -65,6 +66,8 @@ const Dashboard = () => {
       const supabaseUrl = 'https://qplzlwrrqphirywqhdtd.supabase.co';
       const functionUrl = `${supabaseUrl}/functions/v1/fetch-environmental-data`;
 
+      console.log('[FRONTEND] Fetching from:', functionUrl);
+
       const response = await fetch(functionUrl, {
         method: 'POST',
         headers: {
@@ -73,8 +76,11 @@ const Dashboard = () => {
         body: JSON.stringify({ location }),
       });
 
+      console.log('[FRONTEND] Response status:', response.status);
+      console.log('[FRONTEND] Response headers:', Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        throw new Error('Failed to fetch data');
+        throw new Error(`Failed to fetch data: ${response.status}`);
       }
 
       const reader = response.body?.getReader();
@@ -84,14 +90,20 @@ const Dashboard = () => {
         throw new Error('No response stream available');
       }
 
+      console.log('[FRONTEND] Starting to read stream...');
       let buffer = '';
+      let eventCount = 0;
 
       while (true) {
         const { done, value } = await reader.read();
         
-        if (done) break;
+        if (done) {
+          console.log('[FRONTEND] Stream completed. Total events:', eventCount);
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
+        console.log('[FRONTEND] Buffer received:', buffer.length, 'bytes');
         
         // Process complete events
         const lines = buffer.split('\n\n');
@@ -100,13 +112,19 @@ const Dashboard = () => {
         for (const line of lines) {
           if (!line.trim()) continue;
 
+          console.log('[FRONTEND] Processing line:', line);
+
           const eventMatch = line.match(/event: (\w+)\ndata: (.+)/);
-          if (!eventMatch) continue;
+          if (!eventMatch) {
+            console.log('[FRONTEND] No match for line');
+            continue;
+          }
 
           const [, eventType, dataStr] = eventMatch;
           const eventData = JSON.parse(dataStr);
 
-          console.log('Received event:', eventType, eventData);
+          eventCount++;
+          console.log(`[FRONTEND] Event #${eventCount}:`, eventType, eventData);
 
           switch (eventType) {
             case 'status':
@@ -117,16 +135,17 @@ const Dashboard = () => {
               break;
 
             case 'coordinates':
+              console.log('[FRONTEND] Updating coordinates:', eventData);
               partialData.coordinates = {
                 lat: eventData.latitude,
                 lng: eventData.longitude,
               };
               partialData.location = eventData.location;
-              // Update immediately to show map location
-              setData(partialData as EnvironmentalData);
+              setData({ ...partialData } as EnvironmentalData);
               break;
 
             case 'weather':
+              console.log('[FRONTEND] Updating weather metric:', eventData.metric, eventData.value);
               if (!partialData.weather) partialData.weather = {} as any;
               
               switch (eventData.metric) {
@@ -144,7 +163,6 @@ const Dashboard = () => {
                   break;
               }
               
-              // Update UI with latest weather data
               setData({ ...partialData } as EnvironmentalData);
               
               toast({
@@ -154,6 +172,7 @@ const Dashboard = () => {
               break;
 
             case 'soil':
+              console.log('[FRONTEND] Updating soil metric:', eventData.metric, eventData.value);
               if (!partialData.soil) partialData.soil = {} as any;
               
               switch (eventData.metric) {
@@ -174,7 +193,6 @@ const Dashboard = () => {
                   break;
               }
               
-              // Update UI with latest soil data
               setData({ ...partialData } as EnvironmentalData);
               
               toast({
@@ -184,6 +202,7 @@ const Dashboard = () => {
               break;
 
             case 'complete':
+              console.log('[FRONTEND] Analysis complete!');
               setIsLoading(false);
               toast({
                 title: "✅ Analysis Complete",
@@ -192,7 +211,7 @@ const Dashboard = () => {
               break;
 
             case 'error':
-              console.error('Stream error:', eventData.error);
+              console.error('[FRONTEND] Stream error:', eventData.error);
               toast({
                 title: "Error",
                 description: eventData.error,
@@ -205,7 +224,7 @@ const Dashboard = () => {
       }
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('[FRONTEND] Error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "An unexpected error occurred",

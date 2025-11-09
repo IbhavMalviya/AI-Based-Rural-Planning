@@ -172,13 +172,15 @@ function getSoilData(lat: number, lon: number, weatherData: any): any {
 }
 
 serve(async (req) => {
+  console.log('[STREAMING VERSION] Request received');
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Received request for environmental data');
+    console.log('[STREAMING] Received request for environmental data');
     
     const { location } = await req.json();
 
@@ -189,7 +191,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing location: ${location}`);
+    console.log(`[STREAMING] Processing location: ${location}`);
 
     // Create a ReadableStream for Server-Sent Events
     const stream = new ReadableStream({
@@ -198,6 +200,7 @@ serve(async (req) => {
         
         const sendEvent = (eventType: string, data: any) => {
           const message = `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`;
+          console.log(`[STREAMING] Sending event: ${eventType}`, data);
           controller.enqueue(encoder.encode(message));
         };
 
@@ -212,7 +215,7 @@ serve(async (req) => {
             return;
           }
 
-          console.log(`Coordinates found: ${coords.lat}, ${coords.lon}`);
+          console.log(`[STREAMING] Coordinates found: ${coords.lat}, ${coords.lon}`);
           sendEvent('coordinates', { 
             latitude: coords.lat, 
             longitude: coords.lon,
@@ -229,7 +232,7 @@ serve(async (req) => {
             return;
           }
 
-          console.log('Weather data fetched successfully');
+          console.log('[STREAMING] Weather data fetched successfully');
           
           // Send each weather metric individually for real-time updates
           sendEvent('weather', { 
@@ -270,7 +273,7 @@ serve(async (req) => {
             return;
           }
 
-          console.log('Soil data generated successfully');
+          console.log('[STREAMING] Soil data generated successfully');
 
           // Send soil type first
           sendEvent('soil', { 
@@ -314,10 +317,11 @@ serve(async (req) => {
             timestamp: new Date().toISOString()
           });
 
+          console.log('[STREAMING] All events sent, closing stream');
           controller.close();
 
         } catch (error) {
-          console.error('Error in streaming:', error);
+          console.error('[STREAMING] Error in streaming:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
           sendEvent('error', { error: errorMessage });
           controller.close();
@@ -325,6 +329,7 @@ serve(async (req) => {
       }
     });
 
+    console.log('[STREAMING] Returning stream response');
     return new Response(stream, {
       headers: {
         ...corsHeaders,
@@ -335,7 +340,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in fetch-environmental-data function:', error);
+    console.error('[STREAMING] Error in fetch-environmental-data function:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
       JSON.stringify({ 
