@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import LocationSearch from "@/components/LocationSearch";
 import WeatherCard from "@/components/WeatherCard";
 import SoilCard from "@/components/SoilCard";
@@ -40,40 +41,71 @@ const Dashboard = () => {
   const handleSearch = async (location: string) => {
     setIsLoading(true);
 
-    // Simulate geocoding and API call
-    setTimeout(() => {
-      const mockLat = 40.7128 + (Math.random() - 0.5) * 20;
-      const mockLng = -74.006 + (Math.random() - 0.5) * 40;
+    try {
+      // Call the edge function that replicates the Python backend code
+      const { data: result, error } = await supabase.functions.invoke('fetch-environmental-data', {
+        body: { location },
+      });
 
-      const mockData: EnvironmentalData = {
-        location,
+      if (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to fetch environmental data",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (!result) {
+        toast({
+          title: "Error",
+          description: "No data received from server",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Transform the response to match our component structure
+      const environmentalData: EnvironmentalData = {
+        location: result.location,
         coordinates: {
-          lat: mockLat,
-          lng: mockLng,
+          lat: result.latitude,
+          lng: result.longitude,
         },
         weather: {
-          avgTemperature: parseFloat((18.5 + Math.random() * 5).toFixed(2)),
-          avgHumidity: parseFloat((60 + Math.random() * 20).toFixed(2)),
-          prevYearRainfall: parseFloat((800 + Math.random() * 400).toFixed(2)),
-          avgAnnualRainfall: parseFloat((900 + Math.random() * 300).toFixed(2)),
+          avgTemperature: result['Weather Data']['Average Temperature'],
+          avgHumidity: result['Weather Data']['Average Humidity'],
+          prevYearRainfall: result['Weather Data']['Previous Year Total Rainfall'],
+          avgAnnualRainfall: result['Weather Data']['Average Annual Rainfall'],
         },
         soil: {
-          ph: parseFloat((6.5 + Math.random() * 1.5).toFixed(2)),
-          nitrogen: parseFloat((20 + Math.random() * 30).toFixed(2)),
-          phosphorus: parseFloat((15 + Math.random() * 25).toFixed(2)),
-          potassium: parseFloat((150 + Math.random() * 100).toFixed(2)),
-          soilType: ["Loamy", "Clay", "Sandy", "Silty"][Math.floor(Math.random() * 4)],
+          ph: result['Soil Data']['pH'],
+          nitrogen: result['Soil Data']['Nitrogen (N)'],
+          phosphorus: result['Soil Data']['Phosphorus (P)'],
+          potassium: result['Soil Data']['Potassium (K)'],
+          soilType: result['Soil Data']['Soil Type'],
         },
       };
 
-      setData(mockData);
+      setData(environmentalData);
       setIsLoading(false);
 
       toast({
         title: "Analysis Complete",
-        description: `Environmental data retrieved for ${location}`,
+        description: `Real environmental data retrieved for ${location}`,
       });
-    }, 2000);
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
   };
 
   const exportToCSV = () => {
