@@ -41,67 +41,174 @@ const Dashboard = () => {
   const handleSearch = async (location: string) => {
     setIsLoading(true);
 
+    // Initialize partial data structure
+    const partialData: Partial<EnvironmentalData> = {
+      location,
+      coordinates: { lat: 0, lng: 0 },
+      weather: {
+        avgTemperature: 0,
+        avgHumidity: 0,
+        prevYearRainfall: 0,
+        avgAnnualRainfall: 0,
+      },
+      soil: {
+        ph: 0,
+        nitrogen: 0,
+        phosphorus: 0,
+        potassium: 0,
+        soilType: '',
+      },
+    };
+
     try {
-      // Call the edge function that replicates the Python backend code
-      const { data: result, error } = await supabase.functions.invoke('fetch-environmental-data', {
-        body: { location },
+      // Get the Supabase project URL for the edge function
+      const supabaseUrl = 'https://qplzlwrrqphirywqhdtd.supabase.co';
+      const functionUrl = `${supabaseUrl}/functions/v1/fetch-environmental-data`;
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ location }),
       });
 
-      if (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to fetch environmental data",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
+      if (!response.ok) {
+        throw new Error('Failed to fetch data');
       }
 
-      if (!result) {
-        toast({
-          title: "Error",
-          description: "No data received from server",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response stream available');
       }
 
-      // Transform the response to match our component structure
-      const environmentalData: EnvironmentalData = {
-        location: result.location,
-        coordinates: {
-          lat: result.latitude,
-          lng: result.longitude,
-        },
-        weather: {
-          avgTemperature: result['Weather Data']['Average Temperature'],
-          avgHumidity: result['Weather Data']['Average Humidity'],
-          prevYearRainfall: result['Weather Data']['Previous Year Total Rainfall'],
-          avgAnnualRainfall: result['Weather Data']['Average Annual Rainfall'],
-        },
-        soil: {
-          ph: result['Soil Data']['pH'],
-          nitrogen: result['Soil Data']['Nitrogen (N)'],
-          phosphorus: result['Soil Data']['Phosphorus (P)'],
-          potassium: result['Soil Data']['Potassium (K)'],
-          soilType: result['Soil Data']['Soil Type'],
-        },
-      };
+      let buffer = '';
 
-      setData(environmentalData);
-      setIsLoading(false);
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) break;
 
-      toast({
-        title: "Analysis Complete",
-        description: `Real environmental data retrieved for ${location}`,
-      });
+        buffer += decoder.decode(value, { stream: true });
+        
+        // Process complete events
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          const eventMatch = line.match(/event: (\w+)\ndata: (.+)/);
+          if (!eventMatch) continue;
+
+          const [, eventType, dataStr] = eventMatch;
+          const eventData = JSON.parse(dataStr);
+
+          console.log('Received event:', eventType, eventData);
+
+          switch (eventType) {
+            case 'status':
+              toast({
+                title: eventData.message,
+                description: `Processing ${eventData.stage}...`,
+              });
+              break;
+
+            case 'coordinates':
+              partialData.coordinates = {
+                lat: eventData.latitude,
+                lng: eventData.longitude,
+              };
+              partialData.location = eventData.location;
+              // Update immediately to show map location
+              setData(partialData as EnvironmentalData);
+              break;
+
+            case 'weather':
+              if (!partialData.weather) partialData.weather = {} as any;
+              
+              switch (eventData.metric) {
+                case 'temperature':
+                  partialData.weather.avgTemperature = eventData.value;
+                  break;
+                case 'humidity':
+                  partialData.weather.avgHumidity = eventData.value;
+                  break;
+                case 'prevRainfall':
+                  partialData.weather.prevYearRainfall = eventData.value;
+                  break;
+                case 'avgRainfall':
+                  partialData.weather.avgAnnualRainfall = eventData.value;
+                  break;
+              }
+              
+              // Update UI with latest weather data
+              setData({ ...partialData } as EnvironmentalData);
+              
+              toast({
+                title: `${eventData.label} received`,
+                description: `${eventData.value} ${eventData.unit || ''}`,
+              });
+              break;
+
+            case 'soil':
+              if (!partialData.soil) partialData.soil = {} as any;
+              
+              switch (eventData.metric) {
+                case 'type':
+                  partialData.soil.soilType = eventData.value;
+                  break;
+                case 'ph':
+                  partialData.soil.ph = eventData.value;
+                  break;
+                case 'nitrogen':
+                  partialData.soil.nitrogen = eventData.value;
+                  break;
+                case 'phosphorus':
+                  partialData.soil.phosphorus = eventData.value;
+                  break;
+                case 'potassium':
+                  partialData.soil.potassium = eventData.value;
+                  break;
+              }
+              
+              // Update UI with latest soil data
+              setData({ ...partialData } as EnvironmentalData);
+              
+              toast({
+                title: `${eventData.label} received`,
+                description: `${eventData.value} ${eventData.unit || ''}`,
+              });
+              break;
+
+            case 'complete':
+              setIsLoading(false);
+              toast({
+                title: "✅ Analysis Complete",
+                description: `All environmental data retrieved for ${location}`,
+              });
+              break;
+
+            case 'error':
+              console.error('Stream error:', eventData.error);
+              toast({
+                title: "Error",
+                description: eventData.error,
+                variant: "destructive",
+              });
+              setIsLoading(false);
+              break;
+          }
+        }
+      }
+
     } catch (error) {
       console.error('Error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
         variant: "destructive",
       });
       setIsLoading(false);

@@ -191,58 +191,148 @@ serve(async (req) => {
 
     console.log(`Processing location: ${location}`);
 
-    // Step 1: Get coordinates (replicating Python's get_location_coordinates)
-    const coords = await getLocationCoordinates(location);
-    if (!coords) {
-      return new Response(
-        JSON.stringify({ error: `Could not find coordinates for ${location}` }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Create a ReadableStream for Server-Sent Events
+    const stream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
+        
+        const sendEvent = (eventType: string, data: any) => {
+          const message = `event: ${eventType}\ndata: ${JSON.stringify(data)}\n\n`;
+          controller.enqueue(encoder.encode(message));
+        };
 
-    console.log(`Coordinates found: ${coords.lat}, ${coords.lon}`);
+        try {
+          // Step 1: Get coordinates
+          sendEvent('status', { stage: 'geocoding', message: 'Locating coordinates...' });
+          
+          const coords = await getLocationCoordinates(location);
+          if (!coords) {
+            sendEvent('error', { error: `Could not find coordinates for ${location}` });
+            controller.close();
+            return;
+          }
 
-    // Step 2: Fetch weather data (replicating Python's get_weather_data)
-    const weatherData = await getWeatherData(coords.lat, coords.lon);
-    if (!weatherData) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to fetch weather data' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+          console.log(`Coordinates found: ${coords.lat}, ${coords.lon}`);
+          sendEvent('coordinates', { 
+            latitude: coords.lat, 
+            longitude: coords.lon,
+            location: location 
+          });
 
-    console.log('Weather data fetched successfully');
+          // Step 2: Fetch weather data
+          sendEvent('status', { stage: 'weather', message: 'Analyzing 5-year weather patterns...' });
+          
+          const weatherData = await getWeatherData(coords.lat, coords.lon);
+          if (!weatherData) {
+            sendEvent('error', { error: 'Failed to fetch weather data' });
+            controller.close();
+            return;
+          }
 
-    // Step 3: Get soil data (replicating Python's get_soil_data with CSV)
-    const soilData = getSoilData(coords.lat, coords.lon, weatherData);
-    if (!soilData) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate soil data' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+          console.log('Weather data fetched successfully');
+          
+          // Send each weather metric individually for real-time updates
+          sendEvent('weather', { 
+            metric: 'temperature',
+            value: weatherData['Average Temperature'],
+            label: 'Average Temperature',
+            unit: '°C'
+          });
 
-    console.log('Soil data generated successfully');
+          sendEvent('weather', { 
+            metric: 'humidity',
+            value: weatherData['Average Humidity'],
+            label: 'Average Humidity',
+            unit: '%'
+          });
 
-    // Combine all data (matching Python's structure)
-    const result = {
-      location: location,
-      latitude: coords.lat,
-      longitude: coords.lon,
-      'Weather Data': weatherData,
-      'Soil Data': soilData,
-      timestamp: new Date().toISOString(),
-    };
+          sendEvent('weather', { 
+            metric: 'prevRainfall',
+            value: weatherData['Previous Year Total Rainfall'],
+            label: 'Previous Year Rainfall',
+            unit: 'mm'
+          });
 
-    console.log('Returning complete environmental data');
+          sendEvent('weather', { 
+            metric: 'avgRainfall',
+            value: weatherData['Average Annual Rainfall'],
+            label: 'Average Annual Rainfall',
+            unit: 'mm'
+          });
 
-    return new Response(
-      JSON.stringify(result),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          // Step 3: Get soil data
+          sendEvent('status', { stage: 'soil', message: 'Analyzing soil composition...' });
+          
+          const soilData = getSoilData(coords.lat, coords.lon, weatherData);
+          if (!soilData) {
+            sendEvent('error', { error: 'Failed to generate soil data' });
+            controller.close();
+            return;
+          }
+
+          console.log('Soil data generated successfully');
+
+          // Send soil type first
+          sendEvent('soil', { 
+            metric: 'type',
+            value: soilData['Soil Type'],
+            label: 'Soil Type'
+          });
+
+          // Send pH level
+          sendEvent('soil', { 
+            metric: 'ph',
+            value: soilData['pH'],
+            label: 'pH Level'
+          });
+
+          // Send NPK values individually
+          sendEvent('soil', { 
+            metric: 'nitrogen',
+            value: soilData['Nitrogen (N)'],
+            label: 'Nitrogen (N)',
+            unit: 'mg/kg'
+          });
+
+          sendEvent('soil', { 
+            metric: 'phosphorus',
+            value: soilData['Phosphorus (P)'],
+            label: 'Phosphorus (P)',
+            unit: 'mg/kg'
+          });
+
+          sendEvent('soil', { 
+            metric: 'potassium',
+            value: soilData['Potassium (K)'],
+            label: 'Potassium (K)',
+            unit: 'mg/kg'
+          });
+
+          // Send completion event
+          sendEvent('complete', { 
+            message: 'Analysis complete',
+            timestamp: new Date().toISOString()
+          });
+
+          controller.close();
+
+        } catch (error) {
+          console.error('Error in streaming:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+          sendEvent('error', { error: errorMessage });
+          controller.close();
+        }
       }
-    );
+    });
+
+    return new Response(stream, {
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
 
   } catch (error) {
     console.error('Error in fetch-environmental-data function:', error);
