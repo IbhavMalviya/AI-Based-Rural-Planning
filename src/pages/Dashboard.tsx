@@ -441,19 +441,18 @@ Soil Type,${data.soil.soilType}`;
         <div className="relative z-10 text-center px-4 max-w-5xl mx-auto animate-fade-in space-y-8">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">AI-Powered Environmental Intelligence</span>
+            <span className="text-sm font-medium text-primary">The 5 Arcs</span>
           </div>
 
           <h1 className="text-6xl md:text-7xl font-bold mb-6">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-secondary">
-              Indian Agriculture
+              AI Based Indian Rural Planning 
             </span>
-            <span className="block text-primary mt-2">Intelligence Platform</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Empowering farmers and planners with AI-driven environmental analysis. 5-year weather data, 
-            soil composition, and personalized crop recommendations for every district in India.
+            Empowering planners with AIML-driven environmental and geological analysis. 
+            5-year weather data, soil composition, and personalized crop recommendations for every district in India.
           </p>
 
           <div className="mt-12">
@@ -543,7 +542,7 @@ Soil Type,${data.soil.soilType}`;
               </div>
               <h3 className="text-3xl font-bold text-foreground">Begin Your Agricultural Analysis</h3>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Enter any location in India to access comprehensive environmental intelligence for farming and planning.
+                Enter any location in India to access comprehensive environmental and geological information for Rural Planning.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 text-left">
                 <div className="space-y-2">

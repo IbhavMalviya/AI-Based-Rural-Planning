@@ -153,7 +153,7 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Sprout className="h-6 w-6 text-primary" />
-              AI-Powered Crop Recommendations
+                Crop Recommendations
             </CardTitle>
             <CardDescription className="text-base">
               Get personalized crop suggestions based on your soil and weather conditions for {location}

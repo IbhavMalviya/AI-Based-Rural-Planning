@@ -43,8 +43,8 @@ const MapView = ({ location }: MapViewProps) => {
     map.current = L.map(mapContainer.current, {
       center: [20, 0],
       zoom: 2,
-      scrollWheelZoom: true,
-      zoomControl: true,
+      scrollWheelZoom: false,
+      zoomControl: false,
     });
 
     // Add OpenStreetMap tiles (completely free, no API key needed)
