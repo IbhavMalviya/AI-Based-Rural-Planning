@@ -2,3 +2,6 @@ project_id = "qplzlwrrqphirywqhdtd"
 
 [functions.fetch-environmental-data]
 verify_jwt = false
+
+[functions.predict-crops]
+verify_jwt = false

@@ -1,6 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Leaf } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import InfoTooltip from "./InfoTooltip";
 
 interface SoilData {
   ph: number;
@@ -24,10 +25,18 @@ const SoilCard = ({ data }: SoilCardProps) => {
   return (
     <Card className="animate-fade-in shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-strong)] transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary">
-          <Leaf className="h-5 w-5" />
-          Soil Composition Analysis
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Leaf className="h-5 w-5" />
+              Soil Composition & Nutrients
+            </CardTitle>
+            <CardDescription>
+              NPK analysis and pH levels for agriculture planning
+            </CardDescription>
+          </div>
+          <InfoTooltip content="Soil composition determines crop viability. N (Nitrogen) promotes leaf growth, P (Phosphorus) supports root development, K (Potassium) strengthens disease resistance. pH between 6-7.5 is ideal for most crops." />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">

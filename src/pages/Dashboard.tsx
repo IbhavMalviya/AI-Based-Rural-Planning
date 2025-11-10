@@ -7,6 +7,7 @@ import DataChart from "@/components/DataChart";
 import MapView from "@/components/MapView";
 import StatsOverview from "@/components/StatsOverview";
 import DataInsights from "@/components/DataInsights";
+import CropRecommendations from "@/components/CropRecommendations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -292,51 +293,89 @@ Soil Type,${data.soil.soilType}`;
 
     const insights = [];
 
+    // pH Analysis
     if (data.soil.ph < 6) {
       insights.push({
         type: "warning" as const,
-        title: "Acidic Soil Detected",
+        title: "Acidic Soil Detected (pH < 6)",
         description:
-          "pH level is below optimal range. Consider lime application to neutralize acidity for better crop growth.",
+          "Your soil is acidic which can affect nutrient availability. For Indian farmers: Apply agricultural lime (चूना) at 200-400 kg/hectare before monsoon. Acidic soil is suitable for crops like tea, potato, and some pulses. Government schemes like Soil Health Card Scheme provide free soil testing.",
       });
     } else if (data.soil.ph > 7.5) {
       insights.push({
         type: "info" as const,
-        title: "Alkaline Soil Profile",
+        title: "Alkaline Soil Profile (pH > 7.5)",
         description:
-          "pH is above neutral. Select alkaline-tolerant plant species or amend with sulfur compounds.",
+          "Alkaline soil common in arid regions. Add organic matter like farmyard manure (गोबर की खाद) or vermicompost. Gypsum application at 500-1000 kg/hectare helps. Suitable for crops like barley, wheat varieties, and cotton. Drip irrigation recommended.",
       });
     } else {
       insights.push({
         type: "success" as const,
-        title: "Optimal pH Balance",
+        title: "Optimal pH Balance (6-7.5) ✓",
         description:
-          "Soil pH is within ideal range (6-7.5) for most vegetation and urban greenery projects.",
+          "Excellent! Your soil pH is ideal for most Indian crops including rice, wheat, pulses, and vegetables. Maintain with balanced organic farming practices. Regular green manuring with dhaincha or moong improves soil structure.",
       });
     }
 
+    // Rainfall Analysis
     if (data.weather.prevYearRainfall > 1200) {
       insights.push({
         type: "info" as const,
-        title: "High Rainfall Zone",
+        title: "High Rainfall Zone (>1200mm annually)",
         description:
-          "Above-average precipitation detected. Implement robust drainage systems and consider water management infrastructure.",
+          "Abundant water suitable for paddy, sugarcane, banana, and coconut. Risk of waterlogging - ensure proper drainage. Kharif crops ideal. Apply for Pradhan Mantri Fasal Bima Yojana (PMFBY) for crop insurance against excess rainfall damage.",
       });
     } else if (data.weather.prevYearRainfall < 600) {
       insights.push({
         type: "warning" as const,
-        title: "Water Scarcity Risk",
+        title: "Low Rainfall / Drought-Prone Area (<600mm)",
         description:
-          "Low annual rainfall. Prioritize drought-resistant landscaping and efficient irrigation systems.",
+          "Water conservation critical. Drip irrigation eligible for 90% subsidy under PMKSY scheme. Grow drought-resistant crops: bajra, jowar, groundnut, pulses. Adopt mulching and rainwater harvesting. Mgnrega provides funds for farm pond construction.",
+      });
+    } else {
+      insights.push({
+        type: "success" as const,
+        title: "Moderate Rainfall (600-1200mm)",
+        description:
+          "Balanced rainfall zone suitable for diverse crops. Both Kharif and Rabi seasons viable. Cotton, soybean, maize, wheat, chickpea, and vegetables recommended. Mixed cropping reduces risk. Micro-irrigation systems get 55% subsidy.",
       });
     }
 
-    if (data.soil.nitrogen < 30) {
+    // NPK Analysis
+    if (data.soil.nitrogen < 280) {
+      insights.push({
+        type: "warning" as const,
+        title: "Low Nitrogen Levels (<280 mg/kg)",
+        description:
+          "Nitrogen deficiency affects leaf growth. Apply urea (यूरिया) 100-150 kg/ha or use biofertilizers. Grow green manure crops like dhaincha, sunhemp between seasons. Vermicompost adds 1-2% nitrogen. Under Soil Health Card scheme, get customized fertilizer recommendations.",
+      });
+    }
+
+    if (data.soil.phosphorus < 11) {
       insights.push({
         type: "info" as const,
-        title: "Moderate Nitrogen Levels",
+        title: "Phosphorus Deficiency (<11 mg/kg)",
         description:
-          "Nitrogen content is moderate. Supplement with organic matter for enhanced green space development.",
+          "Essential for root development and flowering. Apply Single Super Phosphate (SSP) or DAP at 50-75 kg/ha. Rock phosphate works in acidic soils. Mycorrhizal fungi enhance P uptake. Available through govt fertilizer subsidy schemes.",
+      });
+    }
+
+    if (data.soil.potassium < 140) {
+      insights.push({
+        type: "info" as const,
+        title: "Low Potassium Content (<140 mg/kg)",
+        description:
+          "Important for disease resistance and fruit quality. Apply Muriate of Potash (MOP) 30-60 kg/ha. Wood ash and banana pseudostem are organic K sources. Helps crops withstand drought stress. Test soil annually via Soil Health Card scheme.",
+      });
+    }
+
+    // Temperature-based insights
+    if (data.weather.avgTemperature > 30) {
+      insights.push({
+        type: "info" as const,
+        title: "High Temperature Region (>30°C average)",
+        description:
+          "Suitable for tropical crops: cotton, groundnut, millets, and summer vegetables. Heat-tolerant varieties essential. Shade nets for vegetables. Protected cultivation gets 50% subsidy under NHM. Consider shifting to Zaid season crops.",
       });
     }
 
@@ -407,14 +446,14 @@ Soil Type,${data.soil.soilType}`;
 
           <h1 className="text-6xl md:text-7xl font-bold mb-6">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-secondary">
-              Urban Planning
+              Indian Agriculture
             </span>
-            <span className="block text-primary mt-2">Data Platform</span>
+            <span className="block text-primary mt-2">Intelligence Platform</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Comprehensive environmental analysis combining 5-year weather patterns, soil composition, and
-            geospatial data for sustainable urban development
+            Empowering farmers and planners with AI-driven environmental analysis. 5-year weather data, 
+            soil composition, and personalized crop recommendations for every district in India.
           </p>
 
           <div className="mt-12">
@@ -484,6 +523,13 @@ Soil Type,${data.soil.soilType}`;
 
           {/* Chart Analysis */}
           <DataChart weatherData={data.weather} soilData={data.soil} />
+
+          {/* AI-Powered Crop Recommendations */}
+          <CropRecommendations 
+            weather={data.weather} 
+            soil={data.soil} 
+            location={data.location} 
+          />
         </section>
       )}
 
@@ -495,36 +541,49 @@ Soil Type,${data.soil.soilType}`;
               <div className="inline-flex p-6 rounded-2xl bg-primary/10 mb-4">
                 <MapPin className="h-12 w-12 text-primary" />
               </div>
-              <h3 className="text-3xl font-bold text-foreground">Ready to Analyze Your Location</h3>
+              <h3 className="text-3xl font-bold text-foreground">Begin Your Agricultural Analysis</h3>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                Enter any city or coordinates to receive comprehensive environmental intelligence including:
+                Enter any location in India to access comprehensive environmental intelligence for farming and planning.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 text-left">
                 <div className="space-y-2">
                   <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                     <Thermometer className="h-6 w-6 text-primary" />
                   </div>
                   <h4 className="font-semibold text-foreground">Weather Patterns</h4>
                   <p className="text-sm text-muted-foreground">
-                    5-year temperature, humidity, and rainfall analysis
+                    5-year temperature, humidity, and rainfall analysis for crop planning
                   </p>
                 </div>
                 <div className="space-y-2">
                   <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-3">
                     <Leaf className="h-6 w-6 text-secondary" />
                   </div>
-                  <h4 className="font-semibold text-foreground">Soil Composition</h4>
-                  <p className="text-sm text-muted-foreground">pH levels and NPK nutrient analysis</p>
+                  <h4 className="font-semibold text-foreground">Soil Analysis</h4>
+                  <p className="text-sm text-muted-foreground">NPK nutrients, pH levels, and soil type for optimal fertilizer planning</p>
                 </div>
                 <div className="space-y-2">
                   <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
                     <MapPin className="h-6 w-6 text-accent" />
                   </div>
-                  <h4 className="font-semibold text-foreground">Geospatial Data</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Interactive maps with location visualization
-                  </p>
+                  <h4 className="font-semibold text-foreground">Geographic Data</h4>
+                  <p className="text-sm text-muted-foreground">Boundary maps and precise coordinates for land management</p>
                 </div>
+                <div className="space-y-2">
+                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                  </div>
+                  <h4 className="font-semibold text-foreground">AI Crop Insights</h4>
+                  <p className="text-sm text-muted-foreground">Personalized recommendations with govt. schemes and market info</p>
+                </div>
+              </div>
+              <div className="mt-8 p-6 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
+                <p className="text-sm text-muted-foreground text-left">
+                  <strong className="text-foreground">🌾 For Farmers:</strong> Get insights on crop selection, fertilizer ratios, irrigation needs, and access schemes like PM-KISAN, PMFBY, and Soil Health Cards.
+                </p>
+                <p className="text-sm text-muted-foreground text-left">
+                  <strong className="text-foreground">🏛️ For Planners:</strong> Environmental data for sustainable development, green infrastructure, water management, and climate adaptation strategies.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -535,3 +594,4 @@ Soil Type,${data.soil.soilType}`;
 };
 
 export default Dashboard;
+

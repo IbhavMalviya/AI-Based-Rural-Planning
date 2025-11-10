@@ -1,5 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Cloud, Droplets, Thermometer } from "lucide-react";
+import InfoTooltip from "./InfoTooltip";
 
 interface WeatherData {
   avgTemperature: number;
@@ -16,10 +17,18 @@ const WeatherCard = ({ data }: WeatherCardProps) => {
   return (
     <Card className="animate-fade-in shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-strong)] transition-shadow duration-300">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-primary">
-          <Cloud className="h-5 w-5" />
-          Weather Data (5-Year Analysis)
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <CardTitle className="flex items-center gap-2 text-primary">
+              <Cloud className="h-5 w-5" />
+              Weather Patterns (5-Year Analysis)
+            </CardTitle>
+            <CardDescription>
+              Historical climate data averaged over 2018-2023
+            </CardDescription>
+          </div>
+          <InfoTooltip content="Weather data is sourced from Open-Meteo API, analyzing 5 years of historical records. Temperature and humidity help determine suitable crop varieties and irrigation needs." />
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

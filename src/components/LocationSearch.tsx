@@ -16,6 +16,9 @@ interface LocationSuggestion {
   lon: string;
   type: string;
   importance: number;
+  address?: {
+    country_code?: string;
+  };
 }
 
 const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
@@ -27,7 +30,7 @@ const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch suggestions from Nominatim API
+  // Fetch suggestions from Nominatim API - India only
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (location.trim().length < 2) {
@@ -39,21 +42,27 @@ const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
       setIsFetching(true);
 
       try {
+        // Add India to the search query and filter by country code
+        const searchQuery = `${location}, India`;
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
-            location
-          )}&format=json&limit=8&addressdetails=1`,
+            searchQuery
+          )}&countrycodes=in&format=json&limit=8&addressdetails=1`,
           {
             headers: {
-              "User-Agent": "urban_planning_app",
+              "User-Agent": "indian_agriculture_platform",
             },
           }
         );
 
         if (response.ok) {
           const data = await response.json();
-          setSuggestions(data);
-          setShowSuggestions(data.length > 0);
+          // Additional filter to ensure only Indian locations
+          const indianLocations = data.filter((item: LocationSuggestion) => 
+            item.address && (item.address as any).country_code === 'in'
+          );
+          setSuggestions(indianLocations);
+          setShowSuggestions(indianLocations.length > 0);
         }
       } catch (error) {
         console.error("Error fetching suggestions:", error);
@@ -139,7 +148,7 @@ const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
           <Input
             ref={inputRef}
             type="text"
-            placeholder="Enter city name (e.g., New York, London, Tokyo)"
+            placeholder="Enter Indian city or district (e.g., Mumbai, Pune, Nashik)"
             value={location}
             onChange={(e) => {
               setLocation(e.target.value);
