@@ -36,26 +36,32 @@ Soil Data:
 - Potassium: ${soil.potassium} mg/kg
 - Soil Type: ${soil.soilType}
 
-Provide recommendations in the following structured format for 5-6 most suitable crops for this region:
+Provide recommendations for 5-6 most suitable crops. Format each crop EXACTLY like this:
 
-For each crop, include:
-1. Crop Name (in English and Hindi)
-2. Suitability Score (1-10)
-3. Best Planting Season (Kharif/Rabi/Zaid)
-4. Growing Duration (in days/months)
-5. Expected Yield per hectare
-6. Market Demand & Price Range
-7. Water Requirements
-8. Fertilizer Recommendations (NPK ratios)
-9. Common Pests/Diseases and Management
-10. Specific cultivation tips for this soil and climate
+---CROP START---
+**Crop Name:** [English Name] ([Hindi Name])
+**Suitability:** [Score out of 10]/10
+**Probability:** [Percentage]%
+**Season:** [Kharif/Rabi/Zaid]
+**Duration:** [time period]
+**Yield:** [amount] per hectare
+**Market Price:** ₹[min]-[max] per quintal
+**Water Need:** [Low/Medium/High] - [specific requirements]
+**NPK Ratio:** [N:P:K ratio and details]
+**Key Benefits:** [2-3 key advantages for this location]
+**Cultivation Tips:** [specific advice for this soil and climate]
+**Pests/Diseases:** [common issues and organic solutions]
+---CROP END---
 
-Also provide:
-- Crop rotation suggestions
-- Soil improvement recommendations
-- Water management strategies
-- Government schemes applicable (PM-KISAN, etc.)
-- Expected income per hectare per season`;
+After all crops, add:
+
+---ADDITIONAL INFO---
+**Crop Rotation:** [detailed rotation suggestions]
+**Soil Management:** [improvement recommendations]
+**Water Strategy:** [management strategies]
+**Government Schemes:** [PM-KISAN, PMFBY, etc. with brief details]
+**Income Potential:** [estimated seasonal income analysis]
+---END INFO---`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
