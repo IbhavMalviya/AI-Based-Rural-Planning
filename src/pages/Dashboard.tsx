@@ -69,7 +69,7 @@ const Dashboard = () => {
 
     try {
       // Get the Supabase project URL for the edge function
-      const supabaseUrl = 'https://qplzlwrrqphirywqhdtd.supabase.co';
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const functionUrl = `${supabaseUrl}/functions/v1/fetch-environmental-data`;
 
       console.log('[FRONTEND] Fetching from:', functionUrl);
@@ -78,6 +78,7 @@ const Dashboard = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'apikey': import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({ location }),
       });
