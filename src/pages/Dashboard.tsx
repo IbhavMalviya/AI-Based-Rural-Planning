@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import LocationSearch from "@/components/LocationSearch";
 import WeatherCard from "@/components/WeatherCard";
 import SoilCard from "@/components/SoilCard";
@@ -16,11 +15,10 @@ import LanguageToggle from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { FileJson, FileSpreadsheet, Sparkles, MapPin } from "lucide-react";
+import { FileJson, FileSpreadsheet, Sparkles, MapPin, Thermometer, Droplets, Leaf, Mountain, BarChart3, Shield, Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import heroImage from "@/assets/hero-urban-planning.jpg";
-import { Thermometer, Droplets, Leaf, Mountain } from "lucide-react";
+import heroImage from "@/assets/hero-agriculture.jpg";
 
 interface EnvironmentalData {
   location: string;
@@ -193,16 +191,16 @@ const Dashboard = () => {
     }
 
     if (data.soil.nitrogen < 280) {
-      insights.push({ type: "warning" as const, title: "Low Nitrogen Levels (<280 mg/kg)", description: "Nitrogen deficiency affects leaf growth. Apply urea (यूरिया) 100-150 kg/ha or use biofertilizers. Grow green manure crops like dhaincha, sunhemp between seasons. Vermicompost adds 1-2% nitrogen. Under Soil Health Card scheme, get customized fertilizer recommendations." });
+      insights.push({ type: "warning" as const, title: "Low Nitrogen Levels (<280 mg/kg)", description: "Nitrogen deficiency affects leaf growth. Apply urea (यूरिया) 100-150 kg/ha or use biofertilizers. Grow green manure crops like dhaincha, sunhemp between seasons." });
     }
     if (data.soil.phosphorus < 11) {
-      insights.push({ type: "info" as const, title: "Phosphorus Deficiency (<11 mg/kg)", description: "Essential for root development and flowering. Apply Single Super Phosphate (SSP) or DAP at 50-75 kg/ha. Rock phosphate works in acidic soils. Mycorrhizal fungi enhance P uptake. Available through govt fertilizer subsidy schemes." });
+      insights.push({ type: "info" as const, title: "Phosphorus Deficiency (<11 mg/kg)", description: "Essential for root development and flowering. Apply Single Super Phosphate (SSP) or DAP at 50-75 kg/ha." });
     }
     if (data.soil.potassium < 140) {
-      insights.push({ type: "info" as const, title: "Low Potassium Content (<140 mg/kg)", description: "Important for disease resistance and fruit quality. Apply Muriate of Potash (MOP) 30-60 kg/ha. Wood ash and banana pseudostem are organic K sources. Helps crops withstand drought stress. Test soil annually via Soil Health Card scheme." });
+      insights.push({ type: "info" as const, title: "Low Potassium Content (<140 mg/kg)", description: "Important for disease resistance and fruit quality. Apply Muriate of Potash (MOP) 30-60 kg/ha." });
     }
     if (data.weather.avgTemperature > 30) {
-      insights.push({ type: "info" as const, title: "High Temperature Region (>30°C average)", description: "Suitable for tropical crops: cotton, groundnut, millets, and summer vegetables. Heat-tolerant varieties essential. Shade nets for vegetables. Protected cultivation gets 50% subsidy under NHM. Consider shifting to Zaid season crops." });
+      insights.push({ type: "info" as const, title: "High Temperature Region (>30°C average)", description: "Suitable for tropical crops: cotton, groundnut, millets, and summer vegetables. Heat-tolerant varieties essential." });
     }
 
     return insights;
@@ -219,62 +217,92 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-background">
       <LanguageToggle />
 
       {/* Hero Section */}
-      <section className="relative h-[70vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroImage} alt="Sustainable Urban Planning" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/70 to-background" />
+          <img src={heroImage} alt="Indian Agriculture Landscape" className="w-full h-full object-cover scale-105" />
+          <div className="absolute inset-0 bg-gradient-to-b from-foreground/80 via-foreground/50 to-background" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent" />
         </div>
 
-        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto animate-fade-in space-y-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium text-primary">{t("hero.badge")}</span>
+        <div className="relative z-10 text-center px-4 max-w-5xl mx-auto space-y-8">
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20 backdrop-blur-md">
+            <Sparkles className="h-4 w-4 text-primary-foreground" />
+            <span className="text-sm font-semibold text-primary-foreground tracking-wide">{t("hero.badge")}</span>
           </div>
 
-          <h1 className="text-6xl md:text-7xl font-bold mb-6">
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-foreground via-primary to-secondary">
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight">
+            <span className="text-primary-foreground drop-shadow-lg">
               {t("hero.title")}
             </span>
           </h1>
 
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-primary-foreground/80 max-w-3xl mx-auto leading-relaxed font-light">
             {t("hero.subtitle")}
           </p>
 
-          <div className="mt-12">
+          {/* Feature Pills */}
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            {[
+              { icon: <BarChart3 className="h-3.5 w-3.5" />, label: "5-Year Data" },
+              { icon: <Leaf className="h-3.5 w-3.5" />, label: "Soil Analysis" },
+              { icon: <Shield className="h-3.5 w-3.5" />, label: "Govt Schemes" },
+              { icon: <Globe2 className="h-3.5 w-3.5" />, label: "AI Crop Insights" },
+            ].map((pill) => (
+              <div key={pill.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10">
+                <span className="text-primary-foreground/70">{pill.icon}</span>
+                <span className="text-xs font-medium text-primary-foreground/80">{pill.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="pt-4">
             <LocationSearch onSearch={handleSearch} isLoading={isLoading} />
           </div>
+
+          {/* Scroll indicator */}
+          {!data && (
+            <div className="pt-8 animate-bounce">
+              <div className="w-6 h-10 rounded-full border-2 border-primary-foreground/30 mx-auto flex items-start justify-center p-1.5">
+                <div className="w-1.5 h-3 rounded-full bg-primary-foreground/50 animate-pulse" />
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Data Display Section */}
       {data && (
-        <section className="max-w-[1600px] mx-auto px-4 md:px-8 py-16 space-y-8">
+        <section className="max-w-[1600px] mx-auto px-4 md:px-8 py-16 space-y-10">
+          {/* Location Header */}
           <div className="flex items-start justify-between flex-wrap gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
-                <MapPin className="h-6 w-6 text-primary" />
-                <h2 className="text-4xl font-bold text-foreground">{data.location}</h2>
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <MapPin className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-bold text-foreground">{data.location}</h2>
+                  <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                    <span className="text-sm font-mono">
+                      {data.coordinates.lat.toFixed(4)}°N, {Math.abs(data.coordinates.lng).toFixed(4)}°{data.coordinates.lng < 0 ? "W" : "E"}
+                    </span>
+                    <Separator orientation="vertical" className="h-4" />
+                    <span className="text-sm">{t("misc.5yr_analysis")}</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-muted-foreground flex items-center gap-2">
-                <span className="text-sm">
-                  {data.coordinates.lat.toFixed(4)}°N, {Math.abs(data.coordinates.lng).toFixed(4)}°{data.coordinates.lng < 0 ? "W" : "E"}
-                </span>
-                <Separator orientation="vertical" className="h-4" />
-                <span className="text-sm">{t("misc.5yr_analysis")}</span>
-              </p>
             </div>
 
             <div className="flex gap-3 flex-wrap">
-              <Button onClick={exportToCSV} variant="outline" size="lg" className="gap-2">
+              <Button onClick={exportToCSV} variant="outline" size="lg" className="gap-2 rounded-xl">
                 <FileSpreadsheet className="h-4 w-4" />
                 {t("btn.export_csv")}
               </Button>
-              <Button onClick={exportToJSON} variant="outline" size="lg" className="gap-2">
+              <Button onClick={exportToJSON} variant="outline" size="lg" className="gap-2 rounded-xl">
                 <FileJson className="h-4 w-4" />
                 {t("btn.export_json")}
               </Button>
@@ -286,7 +314,7 @@ const Dashboard = () => {
 
           {/* Map and Insights */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-[500px] rounded-xl overflow-hidden border-none shadow-[var(--shadow-strong)]">
+            <div className="lg:col-span-2 h-[500px] rounded-2xl overflow-hidden shadow-[var(--shadow-strong)]">
               <MapView 
                 location={{ 
                   ...data.coordinates, 
@@ -318,58 +346,74 @@ const Dashboard = () => {
 
       {/* Empty State */}
       {!data && !isLoading && (
-        <section className="max-w-5xl mx-auto px-4 py-24">
-          <Card className="border-none shadow-[var(--shadow-soft)] bg-gradient-to-br from-card to-muted/20">
-            <CardContent className="p-12 text-center space-y-6">
-              <div className="inline-flex p-6 rounded-2xl bg-primary/10 mb-4">
-                <MapPin className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-3xl font-bold text-foreground">{t("empty.title")}</h3>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                {t("empty.subtitle")}
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8 text-left">
-                <div className="space-y-2">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <Thermometer className="h-6 w-6 text-primary" />
+        <section className="max-w-6xl mx-auto px-4 py-20">
+          {/* Trusted by banner */}
+          <div className="text-center mb-12">
+            <p className="text-sm font-medium text-muted-foreground uppercase tracking-widest mb-6">{t("hero.badge")}</p>
+            <div className="flex flex-wrap justify-center gap-8 opacity-40">
+              {["🌾 Open-Meteo", "🗺️ OpenStreetMap", "🤖 Gemini AI", "📊 SoilGrids"].map((src) => (
+                <span key={src} className="text-lg font-semibold text-muted-foreground">{src}</span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[
+              { icon: <Thermometer className="h-7 w-7" />, color: "text-primary", bg: "bg-primary/10", title: t("empty.weather_title"), desc: t("empty.weather_desc") },
+              { icon: <Leaf className="h-7 w-7" />, color: "text-secondary", bg: "bg-secondary/10", title: t("empty.soil_title"), desc: t("empty.soil_desc") },
+              { icon: <MapPin className="h-7 w-7" />, color: "text-accent", bg: "bg-accent/10", title: t("empty.geo_title"), desc: t("empty.geo_desc") },
+              { icon: <Sparkles className="h-7 w-7" />, color: "text-primary", bg: "bg-primary/10", title: t("empty.ai_title"), desc: t("empty.ai_desc") },
+            ].map((card) => (
+              <Card key={card.title} className="border-none shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-strong)] transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-card to-muted/20 group">
+                <CardContent className="p-6 space-y-4">
+                  <div className={`h-14 w-14 rounded-2xl ${card.bg} flex items-center justify-center ${card.color} group-hover:scale-110 transition-transform duration-300`}>
+                    {card.icon}
                   </div>
-                  <h4 className="font-semibold text-foreground">{t("empty.weather_title")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("empty.weather_desc")}</p>
-                </div>
-                <div className="space-y-2">
-                  <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-3">
-                    <Leaf className="h-6 w-6 text-secondary" />
+                  <h4 className="font-bold text-foreground text-lg">{card.title}</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{card.desc}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <Card className="border-none shadow-[var(--shadow-soft)] bg-gradient-to-br from-primary/5 via-card to-secondary/5">
+            <CardContent className="p-8 md:p-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                    🌾 {t("empty.farmers")}
                   </div>
-                  <h4 className="font-semibold text-foreground">{t("empty.soil_title")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("empty.soil_desc")}</p>
+                  <p className="text-muted-foreground leading-relaxed">{t("empty.farmers_desc")}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-3">
-                    <MapPin className="h-6 w-6 text-accent" />
+                <div className="space-y-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/10 text-secondary text-sm font-medium">
+                    🏛️ {t("empty.planners")}
                   </div>
-                  <h4 className="font-semibold text-foreground">{t("empty.geo_title")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("empty.geo_desc")}</p>
+                  <p className="text-muted-foreground leading-relaxed">{t("empty.planners_desc")}</p>
                 </div>
-                <div className="space-y-2">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
-                    <Sparkles className="h-6 w-6 text-primary" />
-                  </div>
-                  <h4 className="font-semibold text-foreground">{t("empty.ai_title")}</h4>
-                  <p className="text-sm text-muted-foreground">{t("empty.ai_desc")}</p>
-                </div>
-              </div>
-              <div className="mt-8 p-6 bg-primary/5 rounded-lg border border-primary/20 space-y-3">
-                <p className="text-sm text-muted-foreground text-left">
-                  <strong className="text-foreground">🌾 {t("empty.farmers")}</strong> {t("empty.farmers_desc")}
-                </p>
-                <p className="text-sm text-muted-foreground text-left">
-                  <strong className="text-foreground">🏛️ {t("empty.planners")}</strong> {t("empty.planners_desc")}
-                </p>
               </div>
             </CardContent>
           </Card>
         </section>
       )}
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-muted/30 py-8 mt-16">
+        <div className="max-w-[1600px] mx-auto px-4 md:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Leaf className="h-5 w-5 text-primary" />
+            <span className="font-bold text-foreground">The 5 Arcs</span>
+            <span className="text-muted-foreground text-sm">— AI Rural Planning Platform</span>
+          </div>
+          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+            <span>Open-Meteo API</span>
+            <span>•</span>
+            <span>OpenStreetMap</span>
+            <span>•</span>
+            <span>Gemini AI</span>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

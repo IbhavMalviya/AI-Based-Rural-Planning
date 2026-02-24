@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MapPin, Search } from "lucide-react";
+import { MapPin, Search, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -78,9 +78,9 @@ const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto relative">
-      <div className="flex gap-3">
+      <div className="flex gap-2 p-2 rounded-2xl bg-primary-foreground/10 backdrop-blur-lg border border-primary-foreground/20 shadow-2xl">
         <div className="relative flex-1">
-          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-primary-foreground/50" />
           <Input
             ref={inputRef}
             type="text"
@@ -89,43 +89,48 @@ const LocationSearch = ({ onSearch, isLoading }: LocationSearchProps) => {
             onChange={(e) => { setLocation(e.target.value); setSelectedIndex(-1); }}
             onKeyDown={handleKeyDown}
             onFocus={() => { if (suggestions.length > 0) setShowSuggestions(true); }}
-            className="pl-10 h-12 text-base bg-card"
+            className="pl-12 h-14 text-base bg-transparent border-none text-primary-foreground placeholder:text-primary-foreground/40 focus-visible:ring-0 focus-visible:ring-offset-0"
             disabled={isLoading}
             maxLength={200}
           />
-          
-          {showSuggestions && suggestions.length > 0 && (
-            <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-2 bg-card border border-border rounded-lg shadow-[var(--shadow-strong)] overflow-hidden z-50 animate-fade-in">
-              <div className="max-h-80 overflow-y-auto">
-                {suggestions.map((suggestion, index) => (
-                  <button
-                    key={suggestion.place_id}
-                    type="button"
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className={cn("w-full px-4 py-3 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left", selectedIndex === index && "bg-muted/50")}
-                  >
-                    <div className="mt-0.5 text-primary"><MapPin className="h-4 w-4" /></div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{suggestion.display_name.split(",")[0]}</p>
-                      <p className="text-xs text-muted-foreground line-clamp-2">{suggestion.display_name}</p>
-                    </div>
-                    <div className="text-xs text-muted-foreground capitalize">{suggestion.type}</div>
-                  </button>
-                ))}
-              </div>
-              {isFetching && (
-                <div className="px-4 py-3 border-t border-border bg-muted/20">
-                  <p className="text-xs text-muted-foreground">Loading more results...</p>
+        </div>
+        
+        <Button type="submit" size="lg" disabled={isLoading || !location.trim()} className="px-8 h-14 rounded-xl text-base font-semibold">
+          {isLoading ? (
+            <span className="flex items-center gap-2"><Loader2 className="h-5 w-5 animate-spin" />{t("hero.analyzing")}</span>
+          ) : (
+            <span className="flex items-center gap-2"><Search className="h-5 w-5" />{t("hero.analyze")}</span>
+          )}
+        </Button>
+      </div>
+      
+      {showSuggestions && suggestions.length > 0 && (
+        <div ref={dropdownRef} className="absolute top-full left-0 right-0 mt-3 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in">
+          <div className="max-h-80 overflow-y-auto">
+            {suggestions.map((suggestion, index) => (
+              <button
+                key={suggestion.place_id}
+                type="button"
+                onClick={() => handleSuggestionClick(suggestion)}
+                className={cn("w-full px-5 py-3.5 flex items-start gap-3 hover:bg-muted/50 transition-colors text-left", selectedIndex === index && "bg-primary/5")}
+              >
+                <div className="mt-0.5 text-primary"><MapPin className="h-4 w-4" /></div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">{suggestion.display_name.split(",")[0]}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{suggestion.display_name}</p>
                 </div>
-              )}
+                <div className="text-xs text-muted-foreground capitalize bg-muted/50 px-2 py-0.5 rounded-md">{suggestion.type}</div>
+              </button>
+            ))}
+          </div>
+          {isFetching && (
+            <div className="px-5 py-3 border-t border-border bg-muted/20 flex items-center gap-2">
+              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+              <p className="text-xs text-muted-foreground">Loading more results...</p>
             </div>
           )}
         </div>
-        
-        <Button type="submit" size="lg" disabled={isLoading || !location.trim()} className="px-8">
-          {isLoading ? <span className="animate-pulse">{t("hero.analyzing")}</span> : <><Search className="mr-2 h-5 w-5" />{t("hero.analyze")}</>}
-        </Button>
-      </div>
+      )}
     </form>
   );
 };
