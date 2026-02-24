@@ -53,6 +53,11 @@ const MapView = ({ location }: MapViewProps) => {
       maxZoom: 19,
     }).addTo(map.current);
 
+    // Fix: invalidate size after map container is rendered
+    setTimeout(() => {
+      map.current?.invalidateSize();
+    }, 100);
+
     return () => {
       if (map.current) {
         map.current.remove();
@@ -195,9 +200,9 @@ const MapView = ({ location }: MapViewProps) => {
   }, [location]);
 
   return (
-    <div className="relative w-full h-full rounded-xl overflow-hidden shadow-[var(--shadow-strong)]">
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/5 rounded-xl" />
+    <div className="relative w-full h-full min-h-[400px] rounded-xl overflow-hidden shadow-[var(--shadow-strong)]">
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full z-0" style={{ minHeight: "400px" }} />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/5 rounded-xl z-10" />
     </div>
   );
 };
