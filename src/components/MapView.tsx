@@ -2,7 +2,6 @@ import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-// Fix for default marker icons
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import iconRetina from "leaflet/dist/images/marker-icon-2x.png";
@@ -35,28 +34,25 @@ const MapView = ({ location }: MapViewProps) => {
   const marker = useRef<L.Marker | null>(null);
   const boundaryLayer = useRef<L.GeoJSON | null>(null);
 
-  // Initialize map
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
 
-    // Create map
     map.current = L.map(mapContainer.current, {
-      center: [20, 0],
-      zoom: 2,
-      scrollWheelZoom: false,
-      zoomControl: false,
+      center: [20, 78],
+      zoom: 5,
+      scrollWheelZoom: true,
+      zoomControl: true,
     });
 
-    // Add OpenStreetMap tiles (completely free, no API key needed)
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
     }).addTo(map.current);
 
-    // Fix: invalidate size after map container is rendered
-    setTimeout(() => {
-      map.current?.invalidateSize();
-    }, 100);
+    // Invalidate size multiple times to handle layout shifts
+    setTimeout(() => map.current?.invalidateSize(), 100);
+    setTimeout(() => map.current?.invalidateSize(), 500);
+    setTimeout(() => map.current?.invalidateSize(), 1000);
 
     return () => {
       if (map.current) {
@@ -66,143 +62,54 @@ const MapView = ({ location }: MapViewProps) => {
     };
   }, []);
 
-  // Update boundary/marker when location changes
   useEffect(() => {
     if (!map.current || !location) return;
 
-    // Remove old marker and boundary
-    if (marker.current) {
-      marker.current.remove();
-      marker.current = null;
-    }
-    if (boundaryLayer.current) {
-      boundaryLayer.current.remove();
-      boundaryLayer.current = null;
-    }
+    // Invalidate size before updating to ensure correct dimensions
+    map.current.invalidateSize();
 
-    console.log('[MAP] Location data:', location);
+    if (marker.current) { marker.current.remove(); marker.current = null; }
+    if (boundaryLayer.current) { boundaryLayer.current.remove(); boundaryLayer.current = null; }
 
-    // If we have polygon data, draw the boundary
     if (location.polygon) {
-      console.log('[MAP] Drawing boundary polygon');
-      
       boundaryLayer.current = L.geoJSON(location.polygon, {
-        style: {
-          color: '#16a34a',
-          weight: 3,
-          opacity: 0.8,
-          fillColor: '#16a34a',
-          fillOpacity: 0.2,
-        },
+        style: { color: '#16a34a', weight: 3, opacity: 0.8, fillColor: '#16a34a', fillOpacity: 0.2 },
       })
         .addTo(map.current)
-        .bindPopup(`
-          <div style="padding: 8px; min-width: 150px;">
-            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
-              ${location.name}
-            </h3>
-            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
-              Analysis area boundary
-            </p>
-          </div>
-        `);
+        .bindPopup(`<div style="padding: 8px; min-width: 150px;"><h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${location.name}</h3><p style="font-size: 14px; color: #666; margin: 0;">Analysis area boundary</p></div>`);
 
-      // Fit map to boundary
       const bounds = boundaryLayer.current.getBounds();
-      map.current.fitBounds(bounds, {
-        padding: [50, 50],
-        duration: 2,
-      });
-
-      // Open popup at center
-      setTimeout(() => {
-        boundaryLayer.current?.openPopup([location.lat, location.lng]);
-      }, 2000);
-
-    } 
-    // If we have bounding box but no polygon, draw a rectangle
-    else if (location.boundingBox && location.boundingBox.length === 4) {
-      console.log('[MAP] Drawing bounding box');
-      
+      map.current.fitBounds(bounds, { padding: [50, 50], duration: 2 });
+      setTimeout(() => boundaryLayer.current?.openPopup([location.lat, location.lng]), 2000);
+    } else if (location.boundingBox && location.boundingBox.length === 4) {
       const [minLat, maxLat, minLng, maxLng] = location.boundingBox;
-      const bounds: L.LatLngBoundsExpression = [
-        [minLat, minLng],
-        [maxLat, maxLng],
-      ];
+      const bounds: L.LatLngBoundsExpression = [[minLat, minLng], [maxLat, maxLng]];
 
-      const rectangle = L.rectangle(bounds, {
-        color: '#16a34a',
-        weight: 3,
-        opacity: 0.8,
-        fillColor: '#16a34a',
-        fillOpacity: 0.2,
-      })
+      const rectangle = L.rectangle(bounds, { color: '#16a34a', weight: 3, opacity: 0.8, fillColor: '#16a34a', fillOpacity: 0.2 })
         .addTo(map.current)
-        .bindPopup(`
-          <div style="padding: 8px; min-width: 150px;">
-            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
-              ${location.name}
-            </h3>
-            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
-              Analysis area boundary
-            </p>
-          </div>
-        `);
+        .bindPopup(`<div style="padding: 8px; min-width: 150px;"><h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${location.name}</h3><p style="font-size: 14px; color: #666; margin: 0;">Analysis area boundary</p></div>`);
 
-      map.current.fitBounds(bounds, {
-        padding: [50, 50],
-        duration: 2,
-      });
-
-      setTimeout(() => {
-        rectangle.openPopup();
-      }, 2000);
-
+      map.current.fitBounds(bounds, { padding: [50, 50], duration: 2 });
+      setTimeout(() => rectangle.openPopup(), 2000);
       boundaryLayer.current = rectangle as any;
-    } 
-    // Fallback to marker if no boundary data
-    else {
-      console.log('[MAP] Drawing center marker (no boundary data)');
-      
-      marker.current = L.marker([location.lat, location.lng], {
-        icon: iconDefault,
-      })
+    } else {
+      marker.current = L.marker([location.lat, location.lng], { icon: iconDefault })
         .addTo(map.current)
-        .bindPopup(`
-          <div style="padding: 8px; min-width: 150px;">
-            <h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px; color: hsl(var(--foreground));">
-              ${location.name}
-            </h3>
-            <p style="font-size: 14px; color: hsl(var(--muted-foreground)); margin: 0;">
-              ${location.lat.toFixed(4)}°, ${location.lng.toFixed(4)}°
-            </p>
-          </div>
-        `);
+        .bindPopup(`<div style="padding: 8px; min-width: 150px;"><h3 style="font-weight: 600; font-size: 16px; margin-bottom: 4px;">${location.name}</h3><p style="font-size: 14px; color: #666; margin: 0;">${location.lat.toFixed(4)}°, ${location.lng.toFixed(4)}°</p></div>`);
 
-      map.current.flyTo([location.lat, location.lng], 13, {
-        duration: 2,
-        easeLinearity: 0.5,
-      });
-
-      setTimeout(() => {
-        marker.current?.openPopup();
-      }, 2000);
+      map.current.flyTo([location.lat, location.lng], 13, { duration: 2, easeLinearity: 0.5 });
+      setTimeout(() => marker.current?.openPopup(), 2000);
     }
 
     return () => {
-      if (marker.current) {
-        marker.current.remove();
-      }
-      if (boundaryLayer.current) {
-        boundaryLayer.current.remove();
-      }
+      if (marker.current) marker.current.remove();
+      if (boundaryLayer.current) boundaryLayer.current.remove();
     };
   }, [location]);
 
   return (
-    <div className="relative w-full h-full min-h-[400px] rounded-xl overflow-hidden shadow-[var(--shadow-strong)]">
-      <div ref={mapContainer} className="absolute inset-0 w-full h-full z-0" style={{ minHeight: "400px" }} />
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background/5 rounded-xl z-10" />
+    <div className="relative w-full h-full rounded-xl overflow-hidden">
+      <div ref={mapContainer} className="w-full h-full" style={{ minHeight: "500px" }} />
     </div>
   );
 };

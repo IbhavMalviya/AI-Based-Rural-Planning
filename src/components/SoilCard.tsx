@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Leaf } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import InfoTooltip from "./InfoTooltip";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface SoilData {
   ph: number;
@@ -16,6 +17,8 @@ interface SoilCardProps {
 }
 
 const SoilCard = ({ data }: SoilCardProps) => {
+  const { t } = useLanguage();
+
   const getPhColor = (ph: number) => {
     if (ph < 6) return "text-destructive";
     if (ph > 7.5) return "text-accent";
@@ -29,58 +32,45 @@ const SoilCard = ({ data }: SoilCardProps) => {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-primary">
               <Leaf className="h-5 w-5" />
-              Soil Composition & Nutrients
+              {t("section.soil")}
             </CardTitle>
-            <CardDescription>
-              NPK analysis and pH levels for agriculture planning
-            </CardDescription>
+            <CardDescription>{t("section.soil_desc")}</CardDescription>
           </div>
-          <InfoTooltip content="Soil composition determines crop viability. N (Nitrogen) promotes leaf growth, P (Phosphorus) supports root development, K (Potassium) strengthens disease resistance. pH between 6-7.5 is ideal for most crops." />
+          <InfoTooltip content="N promotes leaf growth, P supports root development, K strengthens disease resistance. pH between 6-7.5 is ideal." />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-          <span className="text-sm font-medium text-muted-foreground">Soil Type</span>
-          <Badge variant="secondary" className="text-base px-4 py-1">
-            {data.soilType}
-          </Badge>
+          <span className="text-sm font-medium text-muted-foreground">{t("soil.type")}</span>
+          <Badge variant="secondary" className="text-base px-4 py-1">{data.soilType}</Badge>
         </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">pH Level</span>
-              <span className={`text-2xl font-bold ${getPhColor(data.ph)}`}>
-                {data.ph}
-              </span>
+              <span className="text-sm text-muted-foreground">{t("soil.ph")}</span>
+              <span className={`text-2xl font-bold ${getPhColor(data.ph)}`}>{data.ph}</span>
             </div>
             <div className="w-full bg-background rounded-full h-2">
-              <div
-                className="bg-primary h-2 rounded-full transition-all duration-500"
-                style={{ width: `${(data.ph / 14) * 100}%` }}
-              />
+              <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${(data.ph / 14) * 100}%` }} />
             </div>
           </div>
-
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Nitrogen (N)</span>
+              <span className="text-sm text-muted-foreground">{t("soil.nitrogen")}</span>
               <span className="text-2xl font-bold text-primary">{data.nitrogen}</span>
             </div>
             <p className="text-xs text-muted-foreground">mg/kg</p>
           </div>
-
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Phosphorus (P)</span>
+              <span className="text-sm text-muted-foreground">{t("soil.phosphorus")}</span>
               <span className="text-2xl font-bold text-secondary">{data.phosphorus}</span>
             </div>
             <p className="text-xs text-muted-foreground">mg/kg</p>
           </div>
-
           <div className="p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-muted-foreground">Potassium (K)</span>
+              <span className="text-sm text-muted-foreground">{t("soil.potassium")}</span>
               <span className="text-2xl font-bold text-accent">{data.potassium}</span>
             </div>
             <p className="text-xs text-muted-foreground">mg/kg</p>

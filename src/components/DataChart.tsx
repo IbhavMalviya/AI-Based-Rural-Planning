@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
 import InfoTooltip from "./InfoTooltip";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DataChartProps {
   weatherData: {
@@ -19,6 +20,8 @@ interface DataChartProps {
 }
 
 const DataChart = ({ weatherData, soilData }: DataChartProps) => {
+  const { t } = useLanguage();
+
   const chartData = [
     {
       category: "NPK Levels",
@@ -35,13 +38,11 @@ const DataChart = ({ weatherData, soilData }: DataChartProps) => {
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-primary">
               <TrendingUp className="h-5 w-5" />
-              NPK Nutrient Distribution
+              {t("section.npk_chart")}
             </CardTitle>
-            <CardDescription>
-              Visual comparison of soil nutrient levels (mg/kg)
-            </CardDescription>
+            <CardDescription>{t("section.npk_chart_desc")}</CardDescription>
           </div>
-          <InfoTooltip content="This chart shows the NPK (Nitrogen-Phosphorus-Potassium) levels in your soil. Balanced NPK ratios are crucial for optimal crop growth. Different crops require different NPK ratios." />
+          <InfoTooltip content="NPK chart shows Nitrogen, Phosphorus, and Potassium levels. Balanced ratios are crucial for optimal crop growth." />
         </div>
       </CardHeader>
       <CardContent>
