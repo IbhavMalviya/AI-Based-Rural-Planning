@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Loader2, Sprout, TrendingUp, IndianRupee, Droplets, Calendar, Timer, Banknote, Leaf, AlertCircle, Lightbulb, Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface CropData {
   name: string;
@@ -51,7 +52,9 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
   const [isLoading, setIsLoading] = useState(false);
   const [crops, setCrops] = useState<CropData[]>([]);
   const [additionalInfo, setAdditionalInfo] = useState<AdditionalInfo | null>(null);
+  const [hasFetched, setHasFetched] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   const parseCropRecommendations = (text: string) => {
     const cropsList: CropData[] = [];
@@ -59,7 +62,6 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
     
     cropMatches.forEach(cropText => {
       if (!cropText.includes('---CROP END---')) return;
-      
       const crop = cropText.split('---CROP END---')[0];
       const nameMatch = crop.match(/\*\*Crop Name:\*\*\s*(.+)/);
       const suitabilityMatch = crop.match(/\*\*Suitability:\*\*\s*(\d+)/);
@@ -114,21 +116,16 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
 
   const getCropRecommendations = async () => {
     setIsLoading(true);
-    console.log('[CROP-RECOMMEND] Fetching recommendations for:', location);
-
     try {
       const { data, error } = await supabase.functions.invoke('predict-crops', {
         body: { weather, soil, location }
       });
 
-      if (error) {
-        console.error('[CROP-RECOMMEND] Error:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('[CROP-RECOMMEND] Received recommendations');
       const parsedCrops = parseCropRecommendations(data.recommendations);
       setCrops(parsedCrops);
+      setHasFetched(true);
       
       toast({
         title: "✅ Crop Recommendations Generated",
@@ -146,6 +143,13 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
     }
   };
 
+  // Auto-fetch on mount
+  useEffect(() => {
+    if (!hasFetched && location && weather && soil) {
+      getCropRecommendations();
+    }
+  }, [location]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Card className="animate-fade-in shadow-[var(--shadow-strong)] border-2 border-primary/20">
       <CardHeader>
@@ -153,31 +157,17 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-2 text-2xl">
               <Sprout className="h-6 w-6 text-primary" />
-                Crop Recommendations
+              {t("section.crop_rec")}
             </CardTitle>
             <CardDescription className="text-base">
-              Get personalized crop suggestions based on your soil and weather conditions for {location}
+              {t("section.crop_rec_desc")} {location}
             </CardDescription>
           </div>
-          {crops.length === 0 && (
-            <Button
-              onClick={getCropRecommendations}
-              disabled={isLoading}
-              size="lg"
-              className="gap-2"
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="h-4 w-4" />
-                  Get Recommendations
-                </>
-              )}
-            </Button>
+          {isLoading && crops.length === 0 && (
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span className="text-sm">{t("misc.loading")}</span>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -207,14 +197,14 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
                     </div>
                     <div className="text-right">
                       <div className="text-3xl font-bold text-primary">{crop.probability}%</div>
-                      <div className="text-xs text-muted-foreground">Success Rate</div>
+                      <div className="text-xs text-muted-foreground">{t("crop.success_rate")}</div>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Suitability Score</span>
+                      <span className="text-sm font-medium">{t("crop.suitability")}</span>
                       <span className="text-sm font-bold">{crop.suitability}/10</span>
                     </div>
                     <Progress value={crop.suitability * 10} className="h-2" />
@@ -225,21 +215,21 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
                       <div className="flex items-start gap-2">
                         <TrendingUp className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground">Expected Yield</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{t("crop.yield")}</div>
                           <div className="text-sm">{crop.yield}</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
                         <Banknote className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground">Market Price</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{t("crop.market_price")}</div>
                           <div className="text-sm">{crop.marketPrice}</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
                         <Droplets className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground">Water Requirements</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{t("crop.water")}</div>
                           <div className="text-sm">{crop.waterNeed}</div>
                         </div>
                       </div>
@@ -249,14 +239,14 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
                       <div className="flex items-start gap-2">
                         <Leaf className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground">NPK Fertilizer</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{t("crop.npk")}</div>
                           <div className="text-sm">{crop.npkRatio}</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
                         <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div>
-                          <div className="text-xs font-semibold text-muted-foreground">Key Benefits</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{t("crop.benefits")}</div>
                           <div className="text-sm">{crop.benefits}</div>
                         </div>
                       </div>
@@ -267,7 +257,7 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
                     <div className="flex items-start gap-2">
                       <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                       <div>
-                        <div className="text-xs font-semibold text-muted-foreground mb-1">Cultivation Tips</div>
+                        <div className="text-xs font-semibold text-muted-foreground mb-1">{t("crop.tips")}</div>
                         <div className="text-sm">{crop.tips}</div>
                       </div>
                     </div>
@@ -277,7 +267,7 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
                     <div className="flex items-start gap-2">
                       <AlertCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                       <div>
-                        <div className="text-xs font-semibold text-destructive mb-1">Pests & Diseases</div>
+                        <div className="text-xs font-semibold text-destructive mb-1">{t("crop.pests")}</div>
                         <div className="text-sm text-foreground">{crop.pests}</div>
                       </div>
                     </div>
@@ -292,45 +282,30 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <IndianRupee className="h-5 w-5 text-primary" />
-                  Additional Farming Guidance
+                  {t("crop.additional")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <Sprout className="h-4 w-4" />
-                      Crop Rotation Strategy
-                    </h4>
+                    <h4 className="font-semibold text-sm flex items-center gap-2"><Sprout className="h-4 w-4" />{t("crop.rotation")}</h4>
                     <p className="text-sm text-muted-foreground">{additionalInfo.cropRotation}</p>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <Leaf className="h-4 w-4" />
-                      Soil Management
-                    </h4>
+                    <h4 className="font-semibold text-sm flex items-center gap-2"><Leaf className="h-4 w-4" />{t("crop.soil_mgmt")}</h4>
                     <p className="text-sm text-muted-foreground">{additionalInfo.soilManagement}</p>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <Droplets className="h-4 w-4" />
-                      Water Strategy
-                    </h4>
+                    <h4 className="font-semibold text-sm flex items-center gap-2"><Droplets className="h-4 w-4" />{t("crop.water_strategy")}</h4>
                     <p className="text-sm text-muted-foreground">{additionalInfo.waterStrategy}</p>
                   </div>
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <IndianRupee className="h-4 w-4" />
-                      Income Potential
-                    </h4>
+                    <h4 className="font-semibold text-sm flex items-center gap-2"><IndianRupee className="h-4 w-4" />{t("crop.income")}</h4>
                     <p className="text-sm text-muted-foreground">{additionalInfo.incomePotential}</p>
                   </div>
                 </div>
                 <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4" />
-                    Government Schemes & Support
-                  </h4>
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><TrendingUp className="h-4 w-4" />{t("crop.gov_schemes")}</h4>
                   <p className="text-sm text-muted-foreground">{additionalInfo.govSchemes}</p>
                 </div>
               </CardContent>
@@ -338,22 +313,11 @@ const CropRecommendations = ({ weather, soil, location }: CropRecommendationsPro
           )}
 
           <div className="flex justify-end">
-            <Button 
-              onClick={getCropRecommendations}
-              variant="outline"
-              disabled={isLoading}
-              className="gap-2"
-            >
+            <Button onClick={getCropRecommendations} variant="outline" disabled={isLoading} className="gap-2">
               {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Refreshing...
-                </>
+                <><Loader2 className="h-4 w-4 animate-spin" />{t("misc.refreshing")}</>
               ) : (
-                <>
-                  <TrendingUp className="h-4 w-4" />
-                  Refresh Analysis
-                </>
+                <><TrendingUp className="h-4 w-4" />{t("btn.refresh")}</>
               )}
             </Button>
           </div>
