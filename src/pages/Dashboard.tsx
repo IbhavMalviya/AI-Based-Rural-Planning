@@ -9,6 +9,7 @@ import StatsOverview from "@/components/StatsOverview";
 import DataInsights from "@/components/DataInsights";
 import CropRecommendations from "@/components/CropRecommendations";
 import SeasonalCalendar from "@/components/SeasonalCalendar";
+import GovernmentSchemes from "@/components/GovernmentSchemes";
 import PDFReportGenerator from "@/components/PDFReportGenerator";
 import LanguageToggle from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
@@ -307,6 +308,8 @@ const Dashboard = () => {
           <SeasonalCalendar weather={data.weather} soil={data.soil} location={data.location} />
 
           <CropRecommendations weather={data.weather} soil={data.soil} location={data.location} />
+
+          <GovernmentSchemes weather={data.weather} soil={data.soil} location={data.location} />
         </section>
       )}
 

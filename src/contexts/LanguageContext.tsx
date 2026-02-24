@@ -97,6 +97,15 @@ const translations: Record<string, Record<Language, string>> = {
   "crop.income": { en: "Income Potential", hi: "आय की संभावना" },
   "crop.gov_schemes": { en: "Government Schemes & Support", hi: "सरकारी योजनाएं और सहायता" },
 
+  // Government Schemes section
+  "section.gov_schemes": { en: "Government Scheme Finder", hi: "सरकारी योजना खोजक" },
+  "section.gov_schemes_desc": { en: "Recommended central & state schemes based on your environmental data for", hi: "आपके पर्यावरणीय डेटा के आधार पर अनुशंसित केंद्रीय और राज्य योजनाएं" },
+  "gov.match": { en: "Match", hi: "मिलान" },
+  "gov.apply": { en: "Apply / Learn More", hi: "आवेदन / अधिक जानें" },
+  "gov.why_recommended": { en: "Why Recommended for You", hi: "आपके लिए क्यों अनुशंसित" },
+  "gov.benefits": { en: "Key Benefits", hi: "मुख्य लाभ" },
+  "gov.eligibility": { en: "Eligibility", hi: "पात्रता" },
+
   // Misc
   "misc.5yr_analysis": { en: "5-year historical analysis", hi: "5 वर्ष का ऐतिहासिक विश्लेषण" },
   "misc.analysis_complete": { en: "Analysis Complete", hi: "विश्लेषण पूर्ण" },
