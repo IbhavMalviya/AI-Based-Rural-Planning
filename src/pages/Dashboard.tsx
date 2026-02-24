@@ -8,6 +8,8 @@ import MapView from "@/components/MapView";
 import StatsOverview from "@/components/StatsOverview";
 import DataInsights from "@/components/DataInsights";
 import CropRecommendations from "@/components/CropRecommendations";
+import SeasonalCalendar from "@/components/SeasonalCalendar";
+import PDFReportGenerator from "@/components/PDFReportGenerator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -491,6 +493,7 @@ Soil Type,${data.soil.soilType}`;
                 <FileJson className="h-4 w-4" />
                 Export JSON
               </Button>
+              <PDFReportGenerator data={data} />
             </div>
           </div>
 
@@ -523,6 +526,13 @@ Soil Type,${data.soil.soilType}`;
 
           {/* Chart Analysis */}
           <DataChart weatherData={data.weather} soilData={data.soil} />
+
+          {/* Seasonal Planting Calendar */}
+          <SeasonalCalendar
+            weather={data.weather}
+            soil={data.soil}
+            location={data.location}
+          />
 
           {/* AI-Powered Crop Recommendations */}
           <CropRecommendations 
